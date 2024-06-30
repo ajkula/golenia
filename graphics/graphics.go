@@ -21,10 +21,10 @@ func NewGraphics(width, height int) *Graphics {
 	}
 }
 
-func (g *Graphics) Clear(c color.Color) {
+func (g *Graphics) Clear(c pixel.RGBA) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
-	draw.Draw(g.screen, g.screen.Bounds(), &image.Uniform{c}, image.Point{}, draw.Src)
+	draw.Draw(g.screen, g.screen.Bounds(), &image.Uniform{C: c}, image.Point{}, draw.Src)
 }
 
 func (g *Graphics) DrawCell(x, y int, c color.Color) {
@@ -33,16 +33,16 @@ func (g *Graphics) DrawCell(x, y int, c color.Color) {
 	g.screen.Set(x, y, c)
 }
 
-func (g *Graphics) GetScreen() *image.RGBA {
-	g.mu.Lock()
-	defer g.mu.Unlock()
-	return g.screen
-}
-
 func (g *Graphics) Render(window *pixelgl.Window) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	pic := pixel.PictureDataFromImage(g.screen)
 	sprite := pixel.NewSprite(pic, pic.Bounds())
 	sprite.Draw(window, pixel.IM.Moved(window.Bounds().Center()))
+}
+
+func (g *Graphics) DrawImage(img *image.RGBA) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	draw.Draw(g.screen, g.screen.Bounds(), img, image.Point{}, draw.Src)
 }

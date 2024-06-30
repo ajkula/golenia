@@ -1,7 +1,6 @@
 package main
 
 import (
-	"image/color"
 	"time"
 
 	"github.com/ajkula/golenia/game"
@@ -11,10 +10,16 @@ import (
 	"github.com/faiface/pixel/pixelgl"
 )
 
+const (
+	gridWidth  = 200
+	gridHeight = 150
+	scale      = 4
+)
+
 func run() {
 	cfg := pixelgl.WindowConfig{
 		Title:  "Lenia",
-		Bounds: pixel.R(0, 0, 800, 600),
+		Bounds: pixel.R(0, 0, float64(gridWidth*scale), float64(gridHeight*scale)),
 		VSync:  true,
 	}
 
@@ -23,24 +28,39 @@ func run() {
 		panic(err)
 	}
 
-	graphics := graphics.NewGraphics(800, 600)
-	lenia := game.NewLenia(800, 600)
+	graphics := graphics.NewGraphics(gridWidth*scale, gridHeight*scale)
+	lenia := game.NewLenia(gridWidth, gridHeight)
 	input := input.NewInput()
 
-	go func() {
-		for {
-			lenia.Update()
-			time.Sleep(time.Second / 30) // 30 FPS
-		}
-	}()
+	timeStep := 1.0 / 60.0 // 30 updates per second
+	lastUpdate := time.Now()
 
 	for !window.Closed() {
 		input.Update(window)
-		graphics.Clear(color.RGBA{0, 0, 0, 255}) // noir
+
+		now := time.Now()
+		elapsed := now.Sub(lastUpdate).Seconds()
+		if elapsed >= timeStep {
+			lenia.Update()
+			lastUpdate = now
+		}
+
+		if window.JustPressed(pixelgl.KeySpace) {
+			lenia.Reset()
+		}
+
+		if window.JustPressed(pixelgl.KeyUp) {
+			lenia.IncreaseSpeed()
+		}
+
+		if window.JustPressed(pixelgl.KeyDown) {
+			lenia.DecreaseSpeed()
+		}
+
+		graphics.Clear(pixel.RGB(0, 0, 0))
 		lenia.Render(graphics)
 		graphics.Render(window)
 		window.Update()
-		time.Sleep(time.Second / 60) // 60 FPS
 	}
 }
 
